@@ -1,0 +1,23 @@
+{
+    "model_path" : "https://motion.dfki.de/8888/graph/custom/Hybr-iT",
+    "port": 8888,    
+    "connection_type": "tcp",
+    "n_agents": 1,
+    "speed": 1,
+    "target_skeleton": "",
+    "scene_interface_port": 6890,
+    "optimize_steps": false,
+    "debug_export": false,
+    "n_max_ik_iter": 10,
+    "ik_resampling_factor": 1,
+    "n_tree_search_candidates": 4,
+    "use_all_joints": true,
+    "orient_spine": true,
+    "search_for_message_header": false,
+    "restrict_number_of_constraints": true,
+    "activate_joint_constraints": true,
+    "enable_gesture_parameters": true,
+    "activate_grounding": false,
+    "min_target_distance": 50,
+    "ik_interpolation_window": 60
+}
