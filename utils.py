@@ -4,8 +4,8 @@ import mg_server # register components
 from mg_server.morphable_graph_state_machine import DEFAULT_CONFIG
 
 SERVER_TYPE_MAP = dict()
-SERVER_TYPE_MAP["tcp"] = "animation_websocket_server"
-SERVER_TYPE_MAP["websocket"] = "animation_server"
+SERVER_TYPE_MAP["tcp"] = "animation_server"
+SERVER_TYPE_MAP["websocket"] = "animation_websocket_server"
 
 
 DATA_DIR = r".\data"
