@@ -41,7 +41,7 @@ def to_unity_frame(skeleton, frame, animated_joints, scale, action, events, is_i
 
 
 def parse_message(input_bytes):
-    """ decoode byte into utf-8 string until 0x00 is found"""
+    """ decode byte into utf-8 string until 0x00 is found"""
     n_bytes = len(input_bytes)
     start_offset = 0
     end_offset = 0
@@ -75,7 +75,9 @@ def find_header_of_message(conn):
 
 def parse_client_message(server, client_msg_str):
     try:
-        if client_msg_str.startswith("Input:"):
+        if client_msg_str.lower().startswith("ok"):
+            return
+        elif client_msg_str.startswith("Input:"):
             idx = len("Input:")
             input_key = client_msg_str[idx:idx + 1]
             server.input_key = input_key
@@ -144,30 +146,45 @@ def parse_client_message(server, client_msg_str):
             server.play_clip(clip_name)
         elif client_msg_str.startswith("HandleCollision"):
             server.handle_collision()
+        else:
+            print("Ignore message", client_msg_str)
     except Exception as e:
         print("Exception:",e.args)
         sys.exit(0)
 
+
+def read_client_message_with_header(server, conn):
+    input_bytes = conn.recv(server.buffer_size)
+    while len(input_bytes) < 2:
+        input_bytes += conn.recv(server.buffer_size)
+    input_str = bytes.decode(input_bytes, "utf-8")
+    if input_str[:2] == "m:":
+        end_of_number = input_str[2:].find(':')
+        message_size_str = input_str[2:2+end_of_number]
+        message_size = int(message_size_str)
+        message = input_str[2+end_of_number+1:]
+        reached_end = False
+        while len(message) < message_size and not reached_end:
+            _input_bytes = conn.recv(server.buffer_size)
+            n_bytes = len(_input_bytes)
+            end_offset = 0
+            while end_offset < n_bytes and _input_bytes[end_offset] != 0x00:
+                end_offset += 1
+            message += bytes.decode(_input_bytes[0:end_offset], "utf-8")
+            reached_end = _input_bytes[end_offset-1] == 0x00
+        parse_client_message(server, message.rstrip("\0"))# remove trailing null if present
+        print(" reading", message)
+    else:
+        print("Error reading", input_str)
+
+
 def receive_client_message(server, conn):
     if server.search_message_header:
-        input_bytes = find_header_of_message(conn)
-        client_msg_str = bytes.decode(input_bytes, "utf-8")
-        take = False
-        tmp = client_msg_str
-        client_msg_str = ""
-        for char in tmp:
-            if take:
-                client_msg_str += char
-                take = False
-            else:
-                take = True
-        # print(client_msg_str)
+        read_client_message_with_header(server, conn)
     else:
         input_bytes = conn.recv(server.buffer_size)
         client_msg_str = parse_message(input_bytes)
-    parse_client_message(server, client_msg_str)
-    
-
+        parse_client_message(server, client_msg_str)
 
 def convert_dicts_to_numpy(action_desc):
     for key in ["orientationVector", "lookAtTarget", "spineTarget","direction"]:
@@ -210,6 +227,12 @@ def convert_dicts_to_numpy(action_desc):
                             del c["destToolCos"][a]
     return action_desc
 
+def send_message(server, conn, msg):
+    if server.search_message_header:
+        msg = "m:" + str(len(msg)) + ":" + msg
+    msg = msg.encode("utf-8")
+    msg += b'\x00'
+    conn.sendall(msg)
 
 def on_new_client(server, conn, addr):
     #client_msg = conn.recv(1024)
@@ -217,24 +240,20 @@ def on_new_client(server, conn, addr):
     receive_client_message(server, conn)
     skel_dict = server.get_skeleton_dict()
     server_msg = json.dumps(skel_dict)
-    server_msg = server_msg.encode("utf-8")
-    server_msg += b'\x00'
     #print("send", len(server_msg), server_msg)
-    conn.sendall(server_msg)
-    print("wait for answer")
-    client_msg = conn.recv(server.buffer_size)
-    print("received",client_msg)
+    send_message(server, conn, server_msg)
+    print("wait for initial answer")
+    #client_msg = conn.recv(server.buffer_size)
+    receive_client_message(server, conn)
+    print("received answer")
     while True:
         try:
             frame = server.get_frame()
             if frame is not None:
-                #print("root", frame["rootTranslation"])
                 server_msg = json.dumps(frame)
-                server_msg = server_msg.encode("utf-8")
-                server_msg += b'\x00'
-                #print("send", len(server_msg))
-                conn.sendall(server_msg)
-            #print("sleep", server.get_frame_time())
+            else:
+                server_msg = ""
+            send_message(server, conn, server_msg)
             time.sleep(server.get_frame_time())
             receive_client_message(server, conn)
             #print("received", client_msg)
