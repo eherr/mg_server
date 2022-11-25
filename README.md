@@ -6,7 +6,7 @@ The server can load a graph of motion models exported from the [motion modelling
 
 ## Setup Instructions
 
-Install the base packages for [animation data editing](https://github.com/eherr/anim_utils), [visualization](https://github.com/eherr/vis_utils) and the [db interface](https://github.com/eherr/motion_db_interface) and [amorphablegraphs](https://github.com/asr-dfki/morphablegraphs) .
+Install the base packages for [animation data editing](https://github.com/eherr/anim_utils), [visualization](https://github.com/eherr/vis_utils), the [db interface](https://github.com/eherr/motion_db_interface) and [amorphablegraphs](https://github.com/asr-dfki/morphablegraphs) .
 
 ```bat
 
