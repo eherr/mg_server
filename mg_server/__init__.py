@@ -8,7 +8,7 @@ from .hand_collision_boundary import HandCollisionBoundaryComponent
 from vis_utils.scene.scene_object_builder import SceneObjectBuilder, SceneObject
 from vis_utils.scene.utils import get_random_color
 from .scene_interface import SceneInterface
-from morphablegraphs.utilities.db_interface import get_graph_list_from_db, download_graph_from_remote_db
+from motion_db_interface import get_graph_list_from_db, download_graph_from_remote_db
 
 
 def load_morphable_graph_state_machine(builder, path, use_all_joints=False, config=DEFAULT_CONFIG):
